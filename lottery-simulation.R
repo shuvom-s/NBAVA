@@ -16,6 +16,7 @@ library(ggplot2)
 library(reticulate)
 library(RhpcBLASctl)
 library(reshape2)
+library(manipulate)
 ##import all libraries necessary for this script -- it's a lot!
 
 # Setup parallel computation - use all cores on our computer.
@@ -26,7 +27,7 @@ getOption("mc.cores")
 
 
 
-setwd("/Users/shuvomsadhuka/Documents/GitHub/NBAVA")
+setwd("/Users/shuvomsadhuka/Documents/GitHub/NBAVA/")
 samples = 100000
 
 #let's read the CSV into our workspace
@@ -57,7 +58,7 @@ csvreader <- function(x)
   return(df_lottery)
 }
 
-fileList <- list.files(path="/Users/shuvomsadhuka/Documents/GitHub/NBAVA", pattern=".csv") #read all the csv
+fileList <- list.files(path="/Users/shuvomsadhuka/Documents/GitHub/NBAVA/drafts/", pattern=".csv") #read all the csv
 #files in our working directory
 all_drafts <- matrix(ncol = 22)
 
@@ -65,6 +66,7 @@ df_bind <- data.frame()
 
 #iterate over all files in fileList, add to dataframe of all drafts
 for(file in fileList){
+  setwd("/Users/shuvomsadhuka/Documents/GitHub/NBAVA/drafts/")
   df <- csvreader(file)
   df_bind <- rbind(df_bind, df)
 }
@@ -122,6 +124,16 @@ draft_position <- function(x){
   
   return(pos_vector)
 }
+
+print(parameters)
+
+#example skewness
+pos_13 <- df_bind[df_bind$Rk == 13,]
+pos_13$WS <- as.double(pos_13$WS)
+ggplot(pos_13, aes(x = WS)) + stat_bin(aes(y=..count../sum(..count..)), binwidth = 80) +
+  labs(x = "Career Win Shares") + labs(title = "Career Win Shares Density for 8th Overall Pick") +
+  labs(y = "Density")
+pos_13
 
 
 #get the information in draft_positions(x) for each lottery position x, rename the rows
@@ -255,6 +267,10 @@ simulated_ws_gamma_mat <- matrix(simulated_ws_gamma, nrow=14)
 
 old_ws <- matrix(ncol = 14)
 new_ws <- matrix(nrow = )
+picks_plt <- data.frame(nrow = 14)
+picks_exp <- vector()
+picks_sd <- vector()
+
 for(i in 1:14){
   temp1 <- paste("draft_picks_mvn_ws_old", i, sep = "")
   temp2 <- paste("draft_picks_gamma_ws_old", i, sep = "")
@@ -277,7 +293,7 @@ for(i in 1:14){
   get_vorp_mvn_old <- simulated_vorp_mvn[all_old]
   get_vorp_mvn_new <- simulated_vorp_mvn[all_new]
   get_vorp_gamma_old <- simulated_vorp_gamma_mat[all_old]
-  get_vorp_gamma_new <- simulated_ws_gamma_mat[all_new]
+  get_vorp_gamma_new <- simulated_vorp_gamma_mat[all_new]
   
   assign(temp1, get_ws_mvn_old)
   assign(temp2, get_ws_gamma_old)
@@ -304,7 +320,7 @@ for(i in 1:14){
   get_ws_gamma_new <- data.frame(simulated_ws_gamma_mat[all_new])
   names(get_ws_gamma_old)[1] <- "drafts"
   names(get_ws_gamma_new)[1] <- "drafts"
-  get_ws_gamma_new
+  get_vorp_gamma_new
   
   get_ws_gamma_old$id = 'Old'
   get_ws_gamma_new$id = 'New'
@@ -313,10 +329,25 @@ for(i in 1:14){
   
   print(ggplot(old_v_new, aes(drafts, fill = id)) + 
           geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity') + 
-          labs(title = paste0("Old vs New Draft Win Share Values for Team with Seed", i)) +
+          labs(title = paste0("Old vs New Draft WS Values for Team with Seed", i)) +
           labs(x = "Simulated Win Shares"))
 }
 
+old <- c(62.94, 53.87, 50.03, 48.12, 47.12, 47.03, 46.06, 48.50, 52.05, 47.34, 37.54, 24.90, 38.18, 20.30)
+new <- c(64.11, 63.07, 59.85, 54.87, 47.13, 38.64, 44.31, 39.51, 50.08, 47.31, 36.88, 22.76, 38.07, 18.74)
+
+picks <- c(1:14)
+
+df_picks <- data.frame(picks = picks, Old = old, New = new)
+df_picks
+ggplot() + 
+  geom_line(data = df_picks, aes(x = picks, y = Old, color = "red"), size = 1) +
+  geom_line(data = df_picks, aes(x = picks, y = New, color = "blue"), size = 1) +
+  xlab('Pick') +
+  ylab('Expected Career Win Shares') + scale_color_discrete(name = "Draft System", labels = c("Old", "New"))
+
+
+cor(as.numeric(df_bind$VORP), as.numeric(df_bind$WS), use = "complete.obs")
 
 
 
