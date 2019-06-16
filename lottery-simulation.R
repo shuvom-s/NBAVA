@@ -128,12 +128,12 @@ draft_position <- function(x){
 print(parameters)
 
 #example skewness
-pos_13 <- df_bind[df_bind$Rk == 13,]
-pos_13$WS <- as.double(pos_13$WS)
-ggplot(pos_13, aes(x = WS)) + stat_bin(aes(y=..count../sum(..count..)), binwidth = 80) +
-  labs(x = "Career Win Shares") + labs(title = "Career Win Shares Density for 8th Overall Pick") +
+pos_11 <- df_bind[df_bind$Rk == 11,]
+pos_11$WS <- as.double(pos_11$WS)
+ggplot(pos_11, aes(x = WS)) + stat_bin(aes(y=..count../sum(..count..)), binwidth = 60) +
+  labs(x = "Career Win Shares") + labs(title = "Career Win Shares Density for 11th Overall Pick") +
   labs(y = "Density")
-pos_13
+
 
 
 #get the information in draft_positions(x) for each lottery position x, rename the rows
@@ -336,15 +336,18 @@ for(i in 1:14){
 old <- c(62.94, 53.87, 50.03, 48.12, 47.12, 47.03, 46.06, 48.50, 52.05, 47.34, 37.54, 24.90, 38.18, 20.30)
 new <- c(64.11, 63.07, 59.85, 54.87, 47.13, 38.64, 44.31, 39.51, 50.08, 47.31, 36.88, 22.76, 38.07, 18.74)
 
-picks <- c(1:14)
+old.vorp <- c(21.7, 21.7, 20.5, 18.6, 14.4, 10.5, 12.6, 11.0, 16.1, 14.3, 10.5, 4.5, 10.2, 3.3)
+new.vorp <- c(22.4, 18.2, 16.0, 15.0, 14.2, 14.0, 13.7, 15.0, 16.7, 14.5, 10.7, 5.3, 10.2, 3.9)
 
-df_picks <- data.frame(picks = picks, Old = old, New = new)
+df_picks <- data.frame(picks = picks, Old = old.vorp, New = new.vorp)
 df_picks
 ggplot() + 
   geom_line(data = df_picks, aes(x = picks, y = Old, color = "red"), size = 1) +
   geom_line(data = df_picks, aes(x = picks, y = New, color = "blue"), size = 1) +
-  xlab('Pick') +
-  ylab('Expected Career Win Shares') + scale_color_discrete(name = "Draft System", labels = c("Old", "New"))
+  xlab('Seed') +
+  ylab('Expected VORP') + 
+  scale_color_discrete(name = "Draft System", labels = c("Old", "New")) + 
+  scale_x_continuous(breaks = seq(2, 14, by = 2), labels = c("2","4","6",'8','10','12','14'))
 
 
 cor(as.numeric(df_bind$VORP), as.numeric(df_bind$WS), use = "complete.obs")
